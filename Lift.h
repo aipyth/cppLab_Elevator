@@ -6,6 +6,8 @@
 #include <queue>
 #include <vector>
 
+#include <iostream>
+#include <mutex>
 
 enum class MotorState { ERROR, DISENGAGED, IDLE, RUNNING };
 
@@ -34,7 +36,7 @@ enum class DoorState { ERROR, DISENGAGED, OPEN, CLOSE };
 class LiftDoor
 {
 	DoorState state = DoorState::DISENGAGED;
-	double closingSpeed;
+	double closingSpeed = 1;
 	static const double maxClosingSpeed;
 	static const double minClosingSpeed;
 public:
@@ -56,6 +58,8 @@ protected:
 public:
 	virtual void press() = 0;
 	virtual LBState getState() { return state; }
+
+	friend class Controller;
 };
 
 
@@ -72,53 +76,66 @@ public:
 };
 
 
-class Controller {
-	std::queue<uint8_t> goUpQueue;
-	std::queue<uint8_t> goDownQueue;
-	std::vector<uint8_t> route;
-	bool maintenance = false;
-	LiftDoor* liftDoor;
-	Motor* motor;
-public:
-	Controller(Motor*, LiftDoor*);
-	void toggleMaintenance() { maintenance = !maintenance; }
-	~Controller();
-};
-
-
 class Panel {
 	uint8_t floorsNum;
 	FloorButton* floorButtons;
 	CallButton callButton;
-	Controller* controller = nullptr;
 public:
 	Panel(uint8_t);
 	FloorButton* getFloorButton(uint8_t);
 	CallButton* getCallButton() { return &callButton; };
 	~Panel();
 
-	friend class Lift;
 	friend class Controller;
+};
+
+
+class Controller {
+	enum class Direction { UP, DOWN, STAND };
+	std::queue<uint8_t> goUpQueue;
+	std::queue<uint8_t> goDownQueue;
+	std::vector<uint8_t> route;
+	bool maintenance = false;
+	LiftDoor* liftDoor;
+	Motor* motor;
+	Panel* panel;
+	std::mutex lock;
+	std::thread processThread;
+	uint16_t update_delay = 500;
+	uint8_t currentFloor = 5;
+
+	void process();
+public:
+	Controller(Motor*, LiftDoor*, Panel*);
+	void toggleMaintenance() { maintenance = !maintenance; }
+	void pushGoUpQ(uint8_t x) { goUpQueue.push(x); }
+	void pushGoDownQ(uint8_t x) { goDownQueue.push(x); }
+	uint8_t* getCurrentFloor() { return &currentFloor; }
+	~Controller();
 };
 
 
 class Lift
 {
-	uint8_t currentFloor = 0;
+	uint8_t* currentFloor = nullptr;
+	Controller* controller;
 public:
 	Panel panel;
 
 	Lift(uint8_t);
-	uint8_t getCurrentFloor() { return currentFloor; }
-	//~Lift();
+	uint8_t getCurrentFloor() { return *currentFloor; }
+	~Lift();
+
+	friend class CallLiftButton;
 };
 
 
 class CallLiftButton : public LiftButton {
 	uint8_t floor;
 public:
+	CallLiftButton(uint8_t fl) : floor(fl) {};
 	virtual void press() {};
-	void callUp(Lift);
-	void callDown(Lift);
+	void callUp(Lift*);
+	void callDown(Lift*);
 };
 
