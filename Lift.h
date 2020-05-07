@@ -101,8 +101,8 @@ class Controller {
 	Panel* panel;
 	std::mutex lock;
 	std::thread processThread;
-	uint16_t update_delay = 500;
-	uint8_t currentFloor = 5;
+	uint16_t update_delay = 100;
+	uint8_t currentFloor = 0;
 
 	void process();
 public:

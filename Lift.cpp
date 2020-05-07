@@ -19,7 +19,7 @@ void Motor::stop() {
 
 void Motor::goUp() {
 	if (state == MotorState::IDLE) {
-		std::cout << ":Motor: going up" << std::endl;
+		//std::cout << ":Motor: going up" << std::endl;
 		std::thread{ &Motor::runMotor, this }.detach();
 		state = MotorState::RUNNING;
 	}
@@ -27,7 +27,7 @@ void Motor::goUp() {
 
 void Motor::goDown() {
 	if (state == MotorState::IDLE) {
-		std::cout << ":Motor: going down" << std::endl;
+		//std::cout << ":Motor: going down" << std::endl;
 		std::thread{ &Motor::runMotor, this }.detach();
 		state = MotorState::RUNNING;
 	}
@@ -41,7 +41,7 @@ void Motor::runMotor() {
 
 void LiftDoor::open() {
 	if (state == DoorState::CLOSE) {
-		std::cout << ":LiftDoor: opening" << std::endl;
+		std::cout << "\33[0;37;44m:LiftDoor: opening\33[0;37;40m" << std::endl;
 		int sleep_milliseconds = static_cast<int>((maxClosingSpeed - closingSpeed + minClosingSpeed) * 1000);
 		std::this_thread::sleep_for(std::chrono::milliseconds(sleep_milliseconds));
 		state = DoorState::OPEN;
@@ -50,7 +50,7 @@ void LiftDoor::open() {
 
 void LiftDoor::close() {
 	if (state == DoorState::OPEN) {
-		std::cout << ":LiftDoor: closing" << std::endl;
+		std::cout << "\33[0;37;44m:LiftDoor: closing\33[0;37;40m" << std::endl;
 		int sleep_milliseconds = static_cast<int>((maxClosingSpeed - closingSpeed + minClosingSpeed) * 1000);
 		std::this_thread::sleep_for(std::chrono::milliseconds(sleep_milliseconds));
 		state = DoorState::CLOSE;
@@ -74,21 +74,21 @@ void FloorButton::press()
 
 void CallButton::press() {
 	if (state == LBState::ACTIVE) {
+		std::cout << "\33[0;37;44m:CallButton: call ended\33[0;37;40m" << std::endl;
 		state = LBState::IDLE;
 	}
 	else if (state == LBState::IDLE) {
+		std::cout << "\33[0;37;44m:CallButton: call active\33[0;37;40m" << std::endl;
 		state = LBState::ACTIVE;
 	}
 }
 
 
 void CallLiftButton::callUp(Lift* lift) {
-	//state = LBState::ACTIVE;
 	lift->controller->pushGoUpQ(floor);
 }
 
 void CallLiftButton::callDown(Lift* lift) {
-	//state = LBState::ACTIVE;
 	lift->controller->pushGoDownQ(floor);
 }
 
@@ -208,13 +208,6 @@ void Controller::process() {
 		on_route.erase(on_route.begin(), on_route.end());
 		not_on_route.erase(not_on_route.begin(), not_on_route.end());
 
-		/*std::cout << "route:";
-		for (auto& i : route) {
-			std::cout << (unsigned int)i << ' ';
-		}
-		std::cout << std::endl;
-
-		std::cout << std::endl;*/
 		lock.unlock();
 	// give commands to motor
 		if (!route.empty()) {
@@ -225,7 +218,6 @@ void Controller::process() {
 				while (motor->getState() == MotorState::RUNNING) {}
 
 				route.erase(std::remove(route.begin(), route.end(), currentFloor), route.end());
-				//movingDirection = Direction::STAND;
 				panel->getFloorButton(currentFloor)->state = LBState::IDLE;
 				liftDoor->open();
 				std::this_thread::sleep_for(std::chrono::seconds(2));
@@ -245,6 +237,7 @@ void Controller::process() {
 			}
 		}
 		else {
+			// nowhere to go, buddy
 			movingDirection = Direction::STAND;
 		}
 	}
