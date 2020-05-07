@@ -19,7 +19,6 @@ void Motor::stop() {
 
 void Motor::goUp() {
 	if (state == MotorState::IDLE) {
-		//std::cout << ":Motor: going up" << std::endl;
 		std::thread{ &Motor::runMotor, this }.detach();
 		state = MotorState::RUNNING;
 	}
@@ -27,7 +26,6 @@ void Motor::goUp() {
 
 void Motor::goDown() {
 	if (state == MotorState::IDLE) {
-		//std::cout << ":Motor: going down" << std::endl;
 		std::thread{ &Motor::runMotor, this }.detach();
 		state = MotorState::RUNNING;
 	}

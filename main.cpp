@@ -106,18 +106,5 @@ int main(void) {
 		}
 	} while (true);
 
-
-
-	/*std::cout << "press 3 callLiftButton" << std::endl;
-	callLiftButtons[3]->callDown(lf);
-
-	std::cout << "Current floor: " << static_cast<unsigned int>(lf->getCurrentFloor()) << std::endl;
-
-	std::cout << "#press 5 floorbutton#" << std::endl;
-	lf->panel.getFloorButton(5)->press();
-
-
-	deleteCallLiftButtons(callLiftButtons, floors_num);*/
-
 	return 0;
 }
